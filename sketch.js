@@ -9,7 +9,8 @@ var bots;
 var tracers;
 var tracersArray = [];
 var gameSize = 2000;
-var mgAmmo = 400;
+var mgAmmo = 2400;
+var playerHealth = 100;
 
 function preload() {
   corsair = loadImage("F4U-1D Corsair.png");
@@ -33,15 +34,6 @@ function setup() {
   corsairWidth = corsair.width;
   corsairHeight = corsair.height;
   corsairRatio = corsairHeight / corsairWidth;
-
-  playerShadow = new Sprite();
-  playerShadow.x = width / 2 - 10;
-  playerShadow.y = height / 2 + 10;
-  playerShadow.collider = "none";
-  playerShadow.image = corsairShadow;
-  playerShadow.image.width = corsairWidth / 200;
-  playerShadow.image.height = corsairHeight / 200;
-  playerShadow.opacity = 0.1;
 
   player = new Sprite();
   player.x = width / 2;
@@ -131,7 +123,7 @@ function generateOcean() {
 }
 
 function draw() {
-  background(161, 44, 64); // Ocean color
+  background("#3A388F"); // Ocean color
   image(oceanGraphics, -scrollX, -scrollY);
   push();
   translate(gameSize - scrollX, -scrollY);
@@ -154,7 +146,6 @@ function draw() {
   image(oceanCopy, 0, 0);
   pop();
   player.rotateMinTo(mouseX, mouseY, 5, 0);
-  playerShadow.rotation = player.rotation;
   scrollX += cos(player.rotation) * 5;
   scrollY += sin(player.rotation) * 5;
   for (let i = 0; i < tracers.length; i++) {
@@ -167,7 +158,12 @@ function draw() {
       print("PEW")
     }
   }
-  playerShadow.draw();
+  push();
+  translate(width / 2 - 100, height / 2 + 100);
+  rotate(player.rotation);
+  tint(255, 0);
+  image(corsairShadow, 0, 0, corsairWidth / 200, corsairHeight / 200);
+  pop();
   player.draw();
   tracers.draw();
   push();
@@ -178,7 +174,7 @@ function draw() {
   pop();
   push();
   noFill();
-  stroke(255, 0, 0, 150);
+  stroke("#AE173B");
   strokeWeight(4000);
   ellipse(-scrollX, -scrollY, gameSize + 4000, gameSize + 4000);
   pop();
@@ -188,20 +184,25 @@ function draw() {
   rotate(player.rotation);
   image(corsairIcon, 0, 0, 10, 10 * corsairIcon.height / corsairIcon.width);
   pop();
+  fill("#FFFFFF");
+  rect(width / 2 - 50, height / 2 - 100, 100, 10);
+  fill("#00FF00");
+  rect(width / 2 - 50, height / 2 - 100, playerHealth / 100 * 100, 10);
   push();
   fill("white");
   if (Math.round(Math.abs(dist(-scrollX, -scrollY, width / 2, height / 2))) > gameSize / 2) {
     text("Out of bounds", width / 2, height / 2 - 200);
+    playerHealth -= 2;
   }
   text("MG", 50, 50);
   text(mgAmmo, 150, 50);
   pop();
-  if (keyIsPressed && key == " " && millis() >= soundMil + 80) {
+  if (keyIsPressed && key == " " && millis() >= soundMil + 80 && mgAmmo > 0) {
     m2.play();
-    mgAmmo -= 6;
     soundMil = millis();
+    mgAmmo -= 6;
   }
-  if (keyIsPressed && key == " " && millis() >= shootMil + 80 * 5) {
+  if (keyIsPressed && key == " " && millis() >= shootMil + 80 * 5 && mgAmmo > 0) {
     tracersArray.push({
       x: player.x + scrollX + cos(player.rotation - 90) * 4 + cos(player.rotation) * 20,
       y: player.y + scrollY + sin(player.rotation - 90) * 4 + sin(player.rotation) * 20,
@@ -236,5 +237,8 @@ function draw() {
       let tracer = new tracers.Sprite();
     }
     shootMil = millis();
+  }
+  if (playerHealth < 1) {
+    noLoop();
   }
 }
